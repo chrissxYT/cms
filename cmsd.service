@@ -1,0 +1,10 @@
+[Unit]
+Description=simple monitoring
+
+[Service]
+Type=simple
+Restart=always
+ExecStart=/usr/bin/cmsd
+
+[Install]
+WantedBy=multi-user.target
