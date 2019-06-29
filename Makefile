@@ -4,7 +4,8 @@ all:
 clean:
 	@rm -f cmsd
 
-test:
+test:all
+	@./cmsd
 
 install:all
 	@cp -f cmsd /usr/bin/cmsd

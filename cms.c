@@ -20,35 +20,35 @@ typedef struct
 
 #include "config.h"
 
-void strrep_msg(char *in, bool smsg, char *new, char *out)
+void strrep_msg(char *in, bool smsg, char *new, char *out, char *end)
 {
-        while(*in != '\0')
+        while(*in)
         {
                 char *c = in;
-                if(*in++ == '%' && ((smsg &&
-                                        *in++ == 's' &&
-                                        *in++ == 'm' &&
-                                        *in++ == 's' &&
-                                        *in++ == 'g') ||
-                                    (!smsg &&
-                                        *in++ == 'm' &&
-                                        *in++ == 's' &&
-                                        *in++ == 'g')))
+                if(*in++ == '%' && (!smsg || *in++ == 's') &&
+                   *in++ == 'm' &&
+                   *in++ == 's' &&
+                   *in++ == 'g' &&
+                   *in++ == '%')
                 {
                         c = new;
                         while(*c) *out++ = *c++;
                 }
                 else *out++ = *c, in = ++c;
         }
+        while(out < end) *out++ = '\0';
 }
 
 void report(char *msg, char *smsg)
 {
         for(int i = 0; i < arrsz(reportcommands); i++)
         {
-                char bfr[strlen(reportcommands[i])\
-                       + strlen(msg) + strlen(smsg) + 64];
-                strrep_msg(reportcommands[i], 0, msg, bfr);
+                size_t len = strlen(reportcommands[i])
+                       + strlen(msg) + strlen(smsg) + 64;
+                char bfr[len];
+                strrep_msg(reportcommands[i], 0, msg, bfr, bfr + len);
+                strrep_msg(reportcommands[i], 1, smsg, bfr, bfr + len);
+                system(bfr);
         }
 }
 
@@ -56,9 +56,8 @@ void checkall()
 {
         for(int i = 0; i < arrsz(checks); i++)
         {
-                bool b = !system(checks[i].cmd);
-                if(b) checks[i].failedcount = 0;
-                else  checks[i].failedcount++;
+                if(system(checks[i].cmd)) checks[i].failedcount++;
+                else                      checks[i].failedcount = 0;
                 if(checks[i].failedcount >= checks[i].fails2notify)
                         report(checks[i].msg, checks[i].smsg),
                                 checks[i].failedcount = 0;
